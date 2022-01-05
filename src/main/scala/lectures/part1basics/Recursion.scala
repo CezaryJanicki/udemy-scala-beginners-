@@ -56,12 +56,21 @@ object Recursion extends App {
       else if (t <= 1) true
       else isPrimeTailrec(t - 1, n % t != 0 && isStillPrime)
 
-      isPrimeTailrec(n / 2, true)
+    isPrimeTailrec(n / 2, true)
   }
 
   println(isPrime(2639))
   println(isPrime(2003))
 
+  def fibonacci(n: Int): Int = {
+    def fiboTailrec(i: Int, last: Int, nextTolast: Int): Int =
+      if( i >= n) last
+      else fiboTailrec(i+1, last + nextTolast, last)
 
+    if ( n <= 2) 1
+    else fiboTailrec(2, 1, 1)
+  }
+
+  println(fibonacci(8))
 }
 
