@@ -10,9 +10,10 @@ abstract class MyGenericList[+A] {
   //polymorphic call
   override def toString: String = "[" + printElements + "]"
 
-  def map[B](transformer: MyTransformer[A,B]): MyGenericList[B]
-  def flatMap[B](transformer: MyTransformer[A, MyGenericList[B]]): MyGenericList[B]
-  def filter(predicate: MyPredicate[A]): MyGenericList[A]
+  //higher order functions - either receive functions as parameters or return functions - functions as first class values
+  def map[B](transformer: A => B): MyGenericList[B]
+  def flatMap[B](transformer: A => MyGenericList[B]): MyGenericList[B]
+  def filter(predicate: A => Boolean): MyGenericList[A]
   def ++[B >: A](list: MyGenericList[B]): MyGenericList[B]
 }
 
@@ -25,9 +26,9 @@ case object EmptyG extends MyGenericList[Nothing] {
   def add[B >: Nothing](element: B): MyGenericList[B] = new ConsG(element, EmptyG)
   override def printElements: String = ""
 
-  def map[B](transformer: MyTransformer[Nothing,B]): MyGenericList[B] = EmptyG
-  def flatMap[B](transformer: MyTransformer[Nothing, MyGenericList[B]]): MyGenericList[B] = EmptyG
-  def filter(predicate: MyPredicate[Nothing]): MyGenericList[Nothing] = EmptyG
+  def map[B](transformer: Nothing => B): MyGenericList[B] = EmptyG
+  def flatMap[B](transformer: Nothing => MyGenericList[B]): MyGenericList[B] = EmptyG
+  def filter(predicate: Nothing => Boolean): MyGenericList[Nothing] = EmptyG
   def ++[B >: Nothing](list: MyGenericList[B]): MyGenericList[B] = list
 }
 
@@ -41,8 +42,8 @@ case class ConsG[+A](h: A, t: MyGenericList[A]) extends MyGenericList[A] {
     else "" + h + " " + t.printElements
   }
 
-  def map[B](transformer: MyTransformer[A,B]): MyGenericList[B] =
-    new ConsG(transformer.transform(h), t.map(transformer))
+  def map[B](transformer: A => B): MyGenericList[B] =
+    new ConsG(transformer(h), t.map(transformer))
   /*
   [1,2,3].map(n+2) = new Cons(2, [2,3].map(n*2)) = new Cons(2, new Cons(4, [3].map(n*2)))
   = new Cons(2, new Cons(4, new Cons(6, Empty.map(n*2)))
@@ -58,8 +59,8 @@ case class ConsG[+A](h: A, t: MyGenericList[A]) extends MyGenericList[A] {
   */
   def ++[B >: A](list: MyGenericList[B]): MyGenericList[B] = new ConsG(h, t ++ list)
 
-  def flatMap[B](transformer: MyTransformer[A, MyGenericList[B]]): MyGenericList[B] =
-    transformer.transform(h) ++ t.flatMap(transformer)
+  def flatMap[B](transformer: A => MyGenericList[B]): MyGenericList[B] =
+    transformer.apply(h) ++ t.flatMap(transformer)
   /*
   [1.2]].flatMap(n => [n, n+1])
   = [1,2] ++  [2].flatMap(n => [n, n+1])
@@ -68,8 +69,8 @@ case class ConsG[+A](h: A, t: MyGenericList[A]) extends MyGenericList[A] {
   */
 
 
-  def filter(predicate: MyPredicate[A]): MyGenericList[A] = {
-    if (predicate.test(h)) new ConsG(h, t.filter(predicate))
+  def filter(predicate: A => Boolean): MyGenericList[A] = {
+    if (predicate.apply(h)) new ConsG(h, t.filter(predicate)) //or predicate(h) rather than apply
     else t.filter(predicate)
   }
   /*
@@ -82,13 +83,13 @@ case class ConsG[+A](h: A, t: MyGenericList[A]) extends MyGenericList[A] {
 
 }
 
-trait MyPredicate[-T] {
-  def test(elem: T): Boolean
-}
-
-trait MyTransformer[-A, B] {
-  def transform(elem: A): B
-}
+//trait MyPredicate[-T] { //T => Boolean
+//  def test(elem: T): Boolean
+//}
+//
+//trait MyTransformer[-A, B] { // A => B
+//  def transform(elem: A): B
+//}
 
 object ListTestG extends App {
   val listOfIntegers: MyGenericList[Int] = new ConsG(1, new ConsG(2, new ConsG(3, EmptyG)))
@@ -99,18 +100,18 @@ object ListTestG extends App {
   println(listOfIntegers)
   println(listofStrings)
 
-  println(listOfIntegers.map(new MyTransformer[Int, Int] {
-    override def transform(elem: Int): Int = elem * 2
+  println(listOfIntegers.map(new Function1[Int, Int] {
+    override def apply(elem: Int): Int = elem * 2
   })).toString
 
-  println(listOfIntegers.filter(new MyPredicate[Int] {
-    override def test(elem: Int): Boolean = elem % 2 == 0
+  println(listOfIntegers.filter(new Function1[Int, Boolean] {
+    override def apply(elem: Int): Boolean = elem % 2 == 0
   }).toString)
 
   println((listOfIntegers ++ anotherListOfIntegers).toString)
 
-  println(listOfIntegers.flatMap(new MyTransformer[Int, MyGenericList[Int]] {
-    override def transform(elem: Int): MyGenericList[Int] = new ConsG(elem, new ConsG(elem +1, EmptyG))
+  println(listOfIntegers.flatMap(new Function1[Int, MyGenericList[Int]] {
+    override def apply(elem: Int): MyGenericList[Int] = new ConsG(elem, new ConsG(elem +1, EmptyG))
   })).toString
 
   //due to CC alread equals, toString, hashCode, serializing implemented - otherwise should use a recursive equals method for a list
