@@ -100,19 +100,26 @@ object ListTestG extends App {
   println(listOfIntegers)
   println(listofStrings)
 
-  println(listOfIntegers.map(new Function1[Int, Int] {
-    override def apply(elem: Int): Int = elem * 2
-  })).toString
+//  println(listOfIntegers.map(new Function1[Int, Int] {
+//    override def apply(elem: Int): Int = elem * 2
+//  })).toString
+  println(listOfIntegers.map(elem => elem * 2).toString)
+  println(listOfIntegers.map(_ * 2).toString)
 
-  println(listOfIntegers.filter(new Function1[Int, Boolean] {
-    override def apply(elem: Int): Boolean = elem % 2 == 0
-  }).toString)
-
+//  println(listOfIntegers.filter(new Function1[Int, Boolean] {
+//    override def apply(elem: Int): Boolean = elem % 2 == 0
+//  }).toString)
+  
+  println(listOfIntegers.filter(elem => elem % 2 == 0).toString)
+  println(listOfIntegers.filter(_ % 2 == 0).toString)
+  
   println((listOfIntegers ++ anotherListOfIntegers).toString)
 
-  println(listOfIntegers.flatMap(new Function1[Int, MyGenericList[Int]] {
-    override def apply(elem: Int): MyGenericList[Int] = new ConsG(elem, new ConsG(elem +1, EmptyG))
-  })).toString
+//  println(listOfIntegers.flatMap(new Function1[Int, MyGenericList[Int]] {
+//    override def apply(elem: Int): MyGenericList[Int] = new ConsG(elem, new ConsG(elem +1, EmptyG))
+//  })).toString
+    //no underscore here as 2 elem used
+    println(listOfIntegers.flatMap(elem => new ConsG(elem, new ConsG(elem +1, EmptyG))).toString)
 
   //due to CC alread equals, toString, hashCode, serializing implemented - otherwise should use a recursive equals method for a list
   println(clonedListOfIntegers == listOfIntegers)
