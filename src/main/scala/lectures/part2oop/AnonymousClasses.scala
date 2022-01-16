@@ -24,6 +24,6 @@ object AnonymousClasses extends App {
   //also provide all the implementatin, otherwise anonymous cannot be created
   //anonymous class work for abstract and normal classes and traits
   val jim = new Person("jim") {
-    override def sayHi: Unit = println(s"Hi, my name is Jim"
+    override def sayHi: Unit = println(s"Hi, my name is Jim")
   }
 }
