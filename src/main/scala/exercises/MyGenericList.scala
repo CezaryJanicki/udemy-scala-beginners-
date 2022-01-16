@@ -17,7 +17,7 @@ abstract class MyGenericList[+A] {
 }
 
 
-object EmptyG extends MyGenericList[Nothing] {
+case object EmptyG extends MyGenericList[Nothing] {
   def head: Nothing = throw new NoSuchElementException
   def tail: MyGenericList[Nothing] = throw new NoSuchElementException
 
@@ -31,7 +31,7 @@ object EmptyG extends MyGenericList[Nothing] {
   def ++[B >: Nothing](list: MyGenericList[B]): MyGenericList[B] = list
 }
 
-class ConsG[+A](h: A, t: MyGenericList[A]) extends MyGenericList[A] {
+case class ConsG[+A](h: A, t: MyGenericList[A]) extends MyGenericList[A] {
   def head: A = h
   def tail: MyGenericList[A] = t
   def isEmpty: Boolean = false
@@ -92,6 +92,7 @@ trait MyTransformer[-A, B] {
 
 object ListTestG extends App {
   val listOfIntegers: MyGenericList[Int] = new ConsG(1, new ConsG(2, new ConsG(3, EmptyG)))
+  val clonedListOfIntegers: MyGenericList[Int] = new ConsG(1, new ConsG(2, new ConsG(3, EmptyG)))
   val anotherListOfIntegers: MyGenericList[Int] = new ConsG(4, new ConsG(5, EmptyG))
   val listofStrings: MyGenericList[String] = new ConsG("hello", new ConsG(" scala", EmptyG))
 
@@ -111,4 +112,7 @@ object ListTestG extends App {
   println(listOfIntegers.flatMap(new MyTransformer[Int, MyGenericList[Int]] {
     override def transform(elem: Int): MyGenericList[Int] = new ConsG(elem, new ConsG(elem +1, EmptyG))
   })).toString
+
+  //due to CC alread equals, toString, hashCode, serializing implemented - otherwise should use a recursive equals method for a list
+  println(clonedListOfIntegers == listOfIntegers)
 }
