@@ -1,5 +1,7 @@
 package exercises
 
+import scala.language.postfixOps
+
 abstract class MyGenericList[+A] {
 
   def head: A
@@ -167,4 +169,13 @@ object ListTestG extends App {
   println(listOfIntegers.sort((x, y) => y - x))
   println(anotherListOfIntegers.zipWith[String, String](listofStrings, _ + "-" + _))
   println(listOfIntegers.fold(0)(_ + _))
+
+  //testing For Comprehensions
+  val combinations = for {
+    n <- listOfIntegers
+    string <- listofStrings
+  } yield n + " - " + string
+
+  println(combinations)
+
 }
