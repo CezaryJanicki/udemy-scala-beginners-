@@ -15,6 +15,12 @@ abstract class MyGenericList[+A] {
   def flatMap[B](transformer: A => MyGenericList[B]): MyGenericList[B]
   def filter(predicate: A => Boolean): MyGenericList[A]
   def ++[B >: A](list: MyGenericList[B]): MyGenericList[B]
+
+  //HOFs
+  def foreach(f: A => Unit): Unit = ()
+  def sort(compare: (A, A) => Int): MyGenericList[A]
+  def zipWith[B,C](list: MyGenericList[B], zip: (A, B) => C): MyGenericList[C]
+  def fold[B](start: B)(operator: (B, A) => B): B
 }
 
 
@@ -30,6 +36,15 @@ case object EmptyG extends MyGenericList[Nothing] {
   def flatMap[B](transformer: Nothing => MyGenericList[B]): MyGenericList[B] = EmptyG
   def filter(predicate: Nothing => Boolean): MyGenericList[Nothing] = EmptyG
   def ++[B >: Nothing](list: MyGenericList[B]): MyGenericList[B] = list
+
+  //HOFs
+  override def foreach(f: Nothing => Unit): Unit = ()
+  def sort(compare: (Nothing, Nothing) => Int) = EmptyG
+  def zipWith[B,C](list: MyGenericList[B], zip: (Nothing, B) => C): MyGenericList[C] =
+    if (!list.isEmpty) throw new RuntimeException("Lists do not have the same length")
+    else EmptyG
+  def fold[B](start: B)(operator: (B, Nothing) => B): B = start
+
 }
 
 case class ConsG[+A](h: A, t: MyGenericList[A]) extends MyGenericList[A] {
@@ -81,6 +96,29 @@ case class ConsG[+A](h: A, t: MyGenericList[A]) extends MyGenericList[A] {
     new Cons(2, Empty)
   */
 
+  //HOFs
+  override def foreach(f: A => Unit): Unit = {
+    f(h)
+    t.foreach(f)
+  }
+
+  def sort(compare: (A, A) => Int): MyGenericList[A] = {
+    def insert(x: A, sortedList: MyGenericList[A]): MyGenericList[A] =
+      if(sortedList.isEmpty) new ConsG(x, EmptyG)
+      else if (compare(x, sortedList.head) <= 0) new ConsG(x, sortedList)
+      else new ConsG(sortedList.head, insert(x,sortedList.tail))
+    val sortedTail = t.sort(compare)
+    insert(h, sortedTail)
+  }
+
+  def zipWith[B, C](list: MyGenericList[B], zip: (A, B) => C): MyGenericList[C] = {
+    if (list.isEmpty) throw new RuntimeException("Lists do not have the same length")
+    else return ConsG(zip(h, list.head), t.zipWith(list.tail, zip))
+  }
+
+  def fold[B](start: B)(operator: (B,A) => B): B = {
+    t.fold(operator(start, h))(operator)
+  }
 }
 
 //trait MyPredicate[-T] { //T => Boolean
@@ -95,7 +133,7 @@ object ListTestG extends App {
   val listOfIntegers: MyGenericList[Int] = new ConsG(1, new ConsG(2, new ConsG(3, EmptyG)))
   val clonedListOfIntegers: MyGenericList[Int] = new ConsG(1, new ConsG(2, new ConsG(3, EmptyG)))
   val anotherListOfIntegers: MyGenericList[Int] = new ConsG(4, new ConsG(5, EmptyG))
-  val listofStrings: MyGenericList[String] = new ConsG("hello", new ConsG(" scala", EmptyG))
+  val listofStrings: MyGenericList[String] = new ConsG("hello", new ConsG("scala", EmptyG))
 
   println(listOfIntegers)
   println(listofStrings)
@@ -123,4 +161,10 @@ object ListTestG extends App {
 
   //due to CC alread equals, toString, hashCode, serializing implemented - otherwise should use a recursive equals method for a list
   println(clonedListOfIntegers == listOfIntegers)
+
+  //Hofs
+  listOfIntegers.foreach(println)
+  println(listOfIntegers.sort((x, y) => y - x))
+  println(anotherListOfIntegers.zipWith[String, String](listofStrings, _ + "-" + _))
+  println(listOfIntegers.fold(0)(_ + _))
 }
